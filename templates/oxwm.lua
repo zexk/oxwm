@@ -46,17 +46,17 @@ function oxwm.auto_tile(enabled) end
 function oxwm.tiled_resize_mode(enabled) end
 
 ---Set layout symbol override
----@param name string Layout name (e.g., "tiling", "normie", "tabbed", "grid", "monocle")
----@param symbol string Symbol to display (e.g., "[T]", "[F]", "[=]")
+---@param name string Layout name (e.g., "tiling", "normie", "tabbed", "grid", "monocle", "dwindle")
+---@param symbol string Symbol to display (e.g., "[T]", "[F]", "[=]", "[\\]")
 function oxwm.set_layout_symbol(name, symbol) end
 
 ---Set default layout for all tags
----@param name string Layout name ("tiling", "floating", "scrolling", "grid", "monocle", or aliases: "tile", "float", "scroll", "normie")
+---@param name string Layout name ("tiling", "floating", "scrolling", "grid", "monocle", "dwindle", or aliases: "tile", "float", "scroll", "normie", "fib", "fibonacci")
 function oxwm.set_layout(name) end
 
 ---Set default layout for a specific tag
 ---@param tag integer Tag index (1-9)
----@param name string Layout name ("tiling", "floating", "scrolling", "grid", "monocle", or aliases)
+---@param name string Layout name ("tiling", "floating", "scrolling", "grid", "monocle", "dwindle", or aliases)
 function oxwm.set_tag_layout(tag, name) end
 
 ---Set floating window spawn position
@@ -204,6 +204,14 @@ function oxwm.monitor.focus(dir) end
 ---@return table Action table for keybinding
 function oxwm.monitor.tag(dir) end
 
+---Warp the cursor to the focused monitor when switching monitors
+---@param enabled boolean
+function oxwm.monitor.warp_cursor(enabled) end
+
+---Warp the cursor along when sending a window to another monitor
+---@param enabled boolean
+function oxwm.monitor.warp_cursor_on_send(enabled) end
+
 ---Layout management module
 ---@class oxwm.layout
 oxwm.layout = {}
@@ -213,7 +221,7 @@ oxwm.layout = {}
 function oxwm.layout.cycle() end
 
 ---Set specific layout
----@param name string Layout name (e.g., "tiling", "normie", "tabbed", "grid", "monocle", "scrolling")
+---@param name string Layout name (e.g., "tiling", "normie", "tabbed", "grid", "monocle", "scrolling", "dwindle")
 ---@return table Action table for keybinding
 function oxwm.layout.set(name) end
 
@@ -323,6 +331,11 @@ function oxwm.bar.block.static(config) end
 ---@param config {format: string, charging: string, discharging: string, full: string, interval: integer, color: string|integer, underline: boolean, battery_name: string, click: string|{command: string, floating: boolean?, bypass_rules: boolean?}?} Block configuration
 ---@return table Block configuration
 function oxwm.bar.block.battery(config) end
+
+---Create a system tray block. Including this block enables the tray on the first bar; omitting it disables the tray entirely.
+---@param config {color: string|integer, underline: boolean}? Optional appearance config (only color and underline are used)
+---@return table Block configuration
+function oxwm.bar.block.systray(config) end
 
 ---Set normal tag color scheme (unselected, no windows)
 ---@param foreground string|integer Foreground color

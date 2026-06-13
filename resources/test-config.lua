@@ -33,9 +33,9 @@ local modkey = "Mod1"
 
 oxwm.set_terminal("st")
 oxwm.set_modkey(modkey)
-oxwm.set_tags({ "1", "2", "3", "4", "5", "6", "7", "8", "9" })
+oxwm.set_tags({ "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12" })
 oxwm.auto_tile(true);
-oxwm.bar.set_hide_vacant_tags(true);
+oxwm.bar.set_hide_vacant_tags(false);
 
 oxwm.set_layout_symbol("tiling", "[T]")
 oxwm.set_layout_symbol("normie", "[F]")
@@ -116,6 +116,9 @@ oxwm.key.bind({ modkey }, "6", oxwm.tag.view(5))
 oxwm.key.bind({ modkey }, "7", oxwm.tag.view(6))
 oxwm.key.bind({ modkey }, "8", oxwm.tag.view(7))
 oxwm.key.bind({ modkey }, "9", oxwm.tag.view(8))
+oxwm.key.bind({ modkey }, "0", oxwm.tag.view(9))
+oxwm.key.bind({ modkey }, "minus", oxwm.tag.view(10))
+oxwm.key.bind({ modkey }, "equal", oxwm.tag.view(11))
 
 -- Move window to tag
 oxwm.key.bind({ modkey, "Shift" }, "1", oxwm.tag.move_to(0))
@@ -127,6 +130,9 @@ oxwm.key.bind({ modkey, "Shift" }, "6", oxwm.tag.move_to(5))
 oxwm.key.bind({ modkey, "Shift" }, "7", oxwm.tag.move_to(6))
 oxwm.key.bind({ modkey, "Shift" }, "8", oxwm.tag.move_to(7))
 oxwm.key.bind({ modkey, "Shift" }, "9", oxwm.tag.move_to(8))
+oxwm.key.bind({ modkey, "Shift" }, "0", oxwm.tag.move_to(9))
+oxwm.key.bind({ modkey, "Shift" }, "minus", oxwm.tag.move_to(10))
+oxwm.key.bind({ modkey, "Shift" }, "equal", oxwm.tag.move_to(11))
 
 -- Toggle view (view multiple tags at once) - dwm-style multi-tag viewing
 -- Example: Mod+Ctrl+2 while on tag 1 will show BOTH tags 1 and 2
@@ -139,6 +145,9 @@ oxwm.key.bind({ modkey, "Control" }, "6", oxwm.tag.toggleview(5))
 oxwm.key.bind({ modkey, "Control" }, "7", oxwm.tag.toggleview(6))
 oxwm.key.bind({ modkey, "Control" }, "8", oxwm.tag.toggleview(7))
 oxwm.key.bind({ modkey, "Control" }, "9", oxwm.tag.toggleview(8))
+oxwm.key.bind({ modkey, "Control" }, "0", oxwm.tag.toggleview(9))
+oxwm.key.bind({ modkey, "Control" }, "minus", oxwm.tag.toggleview(10))
+oxwm.key.bind({ modkey, "Control" }, "equal", oxwm.tag.toggleview(11))
 
 -- Toggle tag (window on multiple tags) - dwm-style sticky windows
 -- Example: Mod+Ctrl+Shift+2 puts focused window on BOTH current tag and tag 2
@@ -151,6 +160,9 @@ oxwm.key.bind({ modkey, "Control", "Shift" }, "6", oxwm.tag.toggletag(5))
 oxwm.key.bind({ modkey, "Control", "Shift" }, "7", oxwm.tag.toggletag(6))
 oxwm.key.bind({ modkey, "Control", "Shift" }, "8", oxwm.tag.toggletag(7))
 oxwm.key.bind({ modkey, "Control", "Shift" }, "9", oxwm.tag.toggletag(8))
+oxwm.key.bind({ modkey, "Control", "Shift" }, "0", oxwm.tag.toggletag(9))
+oxwm.key.bind({ modkey, "Control", "Shift" }, "minus", oxwm.tag.toggletag(10))
+oxwm.key.bind({ modkey, "Control", "Shift" }, "equal", oxwm.tag.toggletag(11))
 
 oxwm.key.bind({ modkey }, "Tab", oxwm.tag.view_next())
 oxwm.key.bind({ modkey, "Shift" }, "Tab", oxwm.tag.view_previous())

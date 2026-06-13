@@ -2,7 +2,7 @@
   lib,
   stdenv,
   callPackage,
-  zig,
+  zig_0_16,
   pkg-config,
   libx11,
   libxft,
@@ -20,7 +20,7 @@ stdenv.mkDerivation (finalAttrs: {
 
   deps = callPackage ./build.zig.zon.nix {};
 
-  nativeBuildInputs = [zig.hook pkg-config];
+  nativeBuildInputs = [zig_0_16.hook pkg-config];
 
   buildInputs = [
     libx11

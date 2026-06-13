@@ -71,8 +71,8 @@ pub fn loadFile(path: []const u8) bool {
     return true;
 }
 
-pub fn loadConfig() bool {
-    const home = std.posix.getenv("HOME") orelse return false;
+pub fn loadConfig(env: *std.process.Environ.Map) bool {
+    const home = env.get("HOME") orelse return false;
     var path_buf: [512]u8 = undefined;
     const path = std.fmt.bufPrint(&path_buf, "{s}/.config/oxwm/config.lua", .{home}) catch return false;
     return loadFile(path);
@@ -230,13 +230,19 @@ fn registerTagModule(state: *c.lua_State) void {
 }
 
 fn registerMonitorModule(state: *c.lua_State) void {
-    c.lua_createtable(state, 0, 2);
+    c.lua_createtable(state, 0, 4);
 
     c.lua_pushcfunction(state, luaMonitorFocus);
     c.lua_setfield(state, -2, "focus");
 
     c.lua_pushcfunction(state, luaMonitorTag);
     c.lua_setfield(state, -2, "tag");
+
+    c.lua_pushcfunction(state, luaMonitorWarpCursor);
+    c.lua_setfield(state, -2, "warp_cursor");
+
+    c.lua_pushcfunction(state, luaMonitorWarpCursorOnSend);
+    c.lua_setfield(state, -2, "warp_cursor_on_send");
 
     c.lua_setfield(state, -2, "monitor");
 }
@@ -299,6 +305,9 @@ fn registerBarModule(state: *c.lua_State) void {
 
     c.lua_pushcfunction(state, luaBarBlockBattery);
     c.lua_setfield(state, -2, "battery");
+
+    c.lua_pushcfunction(state, luaBarBlockSystray);
+    c.lua_setfield(state, -2, "systray");
 
     c.lua_setfield(state, -2, "block");
 
@@ -593,14 +602,18 @@ fn luaClientToggleFloating(state: ?*c.lua_State) callconv(.c) c_int {
 
 fn luaClientFocusStack(state: ?*c.lua_State) callconv(.c) c_int {
     const s = state orelse return 0;
-    const dir: i32 = @intCast(c.lua_tointegerx(s, 1, null));
+    var isnum: c_int = 0;
+    const raw = c.lua_tointegerx(s, 1, &isnum);
+    const dir: i32 = if (isnum != 0) @intCast(raw) else 1;
     createActionTableWithInt(s, "FocusStack", dir);
     return 1;
 }
 
 fn luaClientMoveStack(state: ?*c.lua_State) callconv(.c) c_int {
     const s = state orelse return 0;
-    const dir: i32 = @intCast(c.lua_tointegerx(s, 1, null));
+    var isnum: c_int = 0;
+    const raw = c.lua_tointegerx(s, 1, &isnum);
+    const dir: i32 = if (isnum != 0) @intCast(raw) else 1;
     createActionTableWithInt(s, "MoveStack", dir);
     return 1;
 }
@@ -700,6 +713,20 @@ fn luaMonitorTag(state: ?*c.lua_State) callconv(.c) c_int {
     const dir: i32 = @intCast(c.lua_tointegerx(s, 1, null));
     createActionTableWithInt(s, "TagMonitor", dir);
     return 1;
+}
+
+fn luaMonitorWarpCursor(state: ?*c.lua_State) callconv(.c) c_int {
+    const cfg = config orelse return 0;
+    const s = state orelse return 0;
+    cfg.warp_cursor_to_monitor = c.lua_toboolean(s, 1) != 0;
+    return 0;
+}
+
+fn luaMonitorWarpCursorOnSend(state: ?*c.lua_State) callconv(.c) c_int {
+    const cfg = config orelse return 0;
+    const s = state orelse return 0;
+    cfg.warp_cursor_on_send = c.lua_toboolean(s, 1) != 0;
+    return 0;
 }
 
 fn luaRuleAdd(state: ?*c.lua_State) callconv(.c) c_int {
@@ -893,6 +920,8 @@ fn parseBlockConfig(state: *c.lua_State, idx: c_int) ?Block {
             c.lua_settop(state, -2);
         }
         c.lua_settop(state, -2);
+    } else if (std.mem.eql(u8, block_type_str, "Systray")) {
+        block.block_type = .systray;
     } else {
         return null;
     }
@@ -979,6 +1008,12 @@ fn luaBarBlockStatic(state: ?*c.lua_State) callconv(.c) c_int {
     const text = getLuaString(s, -1);
     c.lua_settop(s, -2);
     createBlockTable(s, "Static", text);
+    return 1;
+}
+
+fn luaBarBlockSystray(state: ?*c.lua_State) callconv(.c) c_int {
+    const s = state orelse return 0;
+    createBlockTable(s, "Systray", null);
     return 1;
 }
 
@@ -1120,13 +1155,15 @@ fn luaSetTags(state: ?*c.lua_State) callconv(.c) c_int {
 
     const len = c.lua_rawlen(s, 1);
     var i: usize = 0;
-    while (i < len and i < 9) : (i += 1) {
+    while (i < len and i < 12) : (i += 1) {
         _ = c.lua_rawgeti(s, 1, @intCast(i + 1));
         if (dupeLuaString(s, -1)) |tag_str| {
             cfg.tags[i] = tag_str;
         }
         c.lua_settop(s, -2);
     }
+
+    if (i > 0) cfg.tag_count = @intCast(i);
 
     return 0;
 }
@@ -1167,6 +1204,7 @@ fn luaSetLayoutSymbol(state: ?*c.lua_State) callconv(.c) c_int {
         .floating => cfg.layout_floating_symbol = symbol,
         .scrolling => cfg.layout_scrolling_symbol = symbol,
         .grid => cfg.layout_grid_symbol = symbol,
+        .dwindle => cfg.layout_dwindle_symbol = symbol,
     }
     return 0;
 }
@@ -1175,7 +1213,7 @@ fn luaSetTagLayout(state: ?*c.lua_State) callconv(.c) c_int {
     const cfg = config orelse return 0;
     const s = state orelse return 0;
     const tag_index = c.lua_tointegerx(s, 1, null);
-    if (tag_index < 1 or tag_index > 9) return 0;
+    if (tag_index < 1 or tag_index > 12) return 0;
     const name = getStringArg(s, 2) orelse return 0;
     if (config_mod.Layouts.fromString(name) == null) {
         std.debug.print("set_tag_layout: unknown layout '{s}'\n", .{name});

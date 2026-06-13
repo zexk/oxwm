@@ -67,6 +67,7 @@ pub const BlockType = enum {
     shell,
     battery,
     cpu_temp,
+    systray,
 };
 
 pub const ClickTarget = enum {
@@ -87,6 +88,7 @@ pub const Layouts = enum(u32) {
     floating,
     scrolling,
     grid,
+    dwindle,
 
     pub fn fromString(name: []const u8) ?Layouts {
         if (std.meta.stringToEnum(Layouts, name)) |v| return v;
@@ -94,6 +96,8 @@ pub const Layouts = enum(u32) {
         if (std.mem.eql(u8, name, "normie")) return .floating;
         if (std.mem.eql(u8, name, "float")) return .floating;
         if (std.mem.eql(u8, name, "scroll")) return .scrolling;
+        if (std.mem.eql(u8, name, "fib")) return .dwindle;
+        if (std.mem.eql(u8, name, "fibonacci")) return .dwindle;
         return null;
     }
 };
@@ -181,9 +185,10 @@ pub const Config = struct {
     terminal: []const u8 = "st",
     font: []const u8 = "monospace:size=10",
     bar_position: []const u8 = "top",
-    tags: [9][]const u8 = .{ "1", "2", "3", "4", "5", "6", "7", "8", "9" },
+    tags: [12][]const u8 = .{ "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12" },
+    tag_count: u32 = 9,
     layout: []const u8 = "tiling",
-    tag_layouts: [9]?[]const u8 = .{null} ** 9,
+    tag_layouts: [12]?[]const u8 = .{null} ** 12,
 
     border_width: i32 = 2,
     border_focused: u32 = 0x6dade3,
@@ -204,23 +209,26 @@ pub const Config = struct {
     bar_title_max_length: u32 = 0,
     floating_position: FloatingPosition = .center,
     tiled_resize_mode: bool = false,
+    warp_cursor_to_monitor: bool = false,
+    warp_cursor_on_send: bool = false,
 
     layout_tile_symbol: []const u8 = "[]=",
     layout_monocle_symbol: []const u8 = "[M]",
     layout_floating_symbol: []const u8 = "><>",
     layout_scrolling_symbol: []const u8 = "[S]",
     layout_grid_symbol: []const u8 = "[#]",
+    layout_dwindle_symbol: []const u8 = "[\\]",
 
     scheme_normal: ColorScheme = .{ .foreground = 0xbbbbbb, .background = 0x1a1b26, .border = 0x444444 },
     scheme_selected: ColorScheme = .{ .foreground = 0x0db9d7, .background = 0x1a1b26, .border = 0xad8ee6 },
     scheme_occupied: ColorScheme = .{ .foreground = 0x0db9d7, .background = 0x1a1b26, .border = 0x0db9d7 },
     scheme_urgent: ColorScheme = .{ .foreground = 0xf7768e, .background = 0x1a1b26, .border = 0xf7768e },
 
-    keybinds: std.ArrayListUnmanaged(Keybind) = .{},
-    rules: std.ArrayListUnmanaged(Rule) = .{},
-    blocks: std.ArrayListUnmanaged(Block) = .{},
-    buttons: std.ArrayListUnmanaged(MouseButton) = .{},
-    autostart: std.ArrayListUnmanaged([]const u8) = .{},
+    keybinds: std.ArrayListUnmanaged(Keybind) = .empty,
+    rules: std.ArrayListUnmanaged(Rule) = .empty,
+    blocks: std.ArrayListUnmanaged(Block) = .empty,
+    buttons: std.ArrayListUnmanaged(MouseButton) = .empty,
+    autostart: std.ArrayListUnmanaged([]const u8) = .empty,
 
     pub fn init(allocator: std.mem.Allocator) Config {
         return Config{

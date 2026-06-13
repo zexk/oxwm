@@ -17,6 +17,7 @@ const monocle = @import("../layouts/monocle.zig");
 const floating = @import("../layouts/floating.zig");
 const scrolling = @import("../layouts/scrolling.zig");
 const grid = @import("../layouts/grid.zig");
+const dwindle = @import("../layouts/dwindle.zig");
 
 pub const core = @import("core.zig");
 pub const actions = @import("actions.zig");
@@ -51,6 +52,8 @@ pub const Cursors = struct {
 
 pub const WindowManager = struct {
     allocator: mem.Allocator,
+    env: *std.process.Environ.Map,
+    io: std.Io,
 
     /// The connection to the X server.
     display: Display,
@@ -93,7 +96,7 @@ pub const WindowManager = struct {
     ///
     /// Returns an error if the display cannot be opened or another WM is
     /// already running.
-    pub fn init(allocator: mem.Allocator, config: Config, config_path: ?[]const u8) !WindowManager {
+    pub fn init(allocator: mem.Allocator, config: Config, config_path: ?[]const u8, env: *std.process.Environ.Map, io: std.Io) !WindowManager {
         var display = try Display.open();
         errdefer display.close();
 
@@ -110,6 +113,8 @@ pub const WindowManager = struct {
 
         var wm = WindowManager{
             .allocator = allocator,
+            .env = env,
+            .io = io,
             .display = display,
             .x11_fd = x11_fd,
             .wm_check_window = atoms_result.check_window,
@@ -167,6 +172,7 @@ pub const WindowManager = struct {
         &floating.layout,
         &scrolling.layout,
         &grid.layout,
+        &dwindle.layout,
     };
 
     fn initMonitor(self: *WindowManager, mon: *Monitor, num: usize, x: i16, y: i16, w: c_int, h: c_int) void {
@@ -267,12 +273,14 @@ pub const WindowManager = struct {
                 new_mon.lt[2] = &floating.layout;
                 new_mon.lt[3] = &scrolling.layout;
                 new_mon.lt[4] = &grid.layout;
+                new_mon.lt[5] = &dwindle.layout;
                 for (0..10) |i| {
                     new_mon.pertag.ltidxs[i][0] = new_mon.lt[0];
                     new_mon.pertag.ltidxs[i][1] = new_mon.lt[1];
                     new_mon.pertag.ltidxs[i][2] = new_mon.lt[2];
                     new_mon.pertag.ltidxs[i][3] = new_mon.lt[3];
                     new_mon.pertag.ltidxs[i][4] = new_mon.lt[4];
+                    new_mon.pertag.ltidxs[i][5] = new_mon.lt[5];
                 }
                 if (last) |l| {
                     l.next = new_mon;
@@ -356,6 +364,7 @@ pub const WindowManager = struct {
                 mon.lt[2] = &floating.layout;
                 mon.lt[3] = &scrolling.layout;
                 mon.lt[4] = &grid.layout;
+                mon.lt[5] = &dwindle.layout;
                 self.monitors = mon;
                 self.selected_monitor = mon;
             }
@@ -419,6 +428,8 @@ pub const WindowManager = struct {
     pub fn setupBars(self: *WindowManager) void {
         var current_monitor = self.monitors;
         var last_bar: ?*Bar = null;
+        var is_first_bar = true;
+        const want_systray = configHasSystray(self.config);
 
         while (current_monitor) |monitor| {
             const bar = Bar.create(
@@ -427,10 +438,12 @@ pub const WindowManager = struct {
                 self.display.screen,
                 monitor,
                 self.config,
+                is_first_bar and want_systray,
             ) orelse {
                 current_monitor = monitor.next;
                 continue;
             };
+            is_first_bar = false;
 
             if (tiling.bar_height == 0) {
                 tiling.setBarHeight(bar.height);
@@ -453,7 +466,11 @@ pub const WindowManager = struct {
     pub fn populateBarBlocks(self: *WindowManager, bar: *Bar) void {
         if (self.config.blocks.items.len > 0) {
             for (self.config.blocks.items) |cfg_block| {
-                bar.addBlock(configBlockToBarBlock(cfg_block));
+                if (cfg_block.block_type == .systray) {
+                    bar.setSystrayConfig(cfg_block.underline, cfg_block.color);
+                } else {
+                    bar.addBlock(configBlockToBarBlock(cfg_block));
+                }
             }
         } else {
             bar.addBlock(blocks_mod.Block.initRam("", 5, 0x7aa2f7, 0, true));
@@ -480,6 +497,10 @@ pub const WindowManager = struct {
 
     pub fn windowToBar(self: *WindowManager, win: xlib.Window) ?*Bar {
         return bar_mod.windowToBar(self.bars, win);
+    }
+
+    pub fn getSystray(self: *WindowManager) ?*bar_mod.Systray {
+        return bar_mod.getSystray(self.bars);
     }
 
     /// Refreshes the cached numlock modifier bitmask from the X server's
@@ -663,7 +684,7 @@ pub const WindowManager = struct {
 
             var current_bar = self.bars;
             while (current_bar) |bar| {
-                bar.updateBlocks();
+                bar.updateBlocks(self.io, self.allocator);
                 bar.draw(self.display.handle, self.config);
                 current_bar = bar.next;
             }
@@ -710,6 +731,13 @@ pub const WindowManager = struct {
     }
 };
 
+fn configHasSystray(config: Config) bool {
+    for (config.blocks.items) |block| {
+        if (block.block_type == .systray) return true;
+    }
+    return false;
+}
+
 /// Converts a config block description into a live status bar block.
 pub fn configBlockToBarBlock(cfg: config_mod.Block) blocks_mod.Block {
     var block = switch (cfg.block_type) {
@@ -749,6 +777,7 @@ pub fn configBlockToBarBlock(cfg: config_mod.Block) blocks_mod.Block {
             cfg.bg,
             cfg.underline,
         ),
+        .systray => blocks_mod.Block.initStatic("", 0, 0, false),
     };
     block.click = cfg.click;
     return block;

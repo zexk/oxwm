@@ -16,53 +16,63 @@ const WindowManager = wm_mod.WindowManager;
 
 const snap_distance: i32 = 32;
 
+// execvpeZ removed in zig 0.16 std lib rework (codeberg.org/ziglang/zig/issues/31694) with no replacement
+extern "c" fn execvp(file: [*:0]const u8, argv: [*:null]const ?[*:0]const u8) c_int;
+
 pub fn spawnChildSetup(wm: *WindowManager) void {
     _ = std.c.setsid();
-    if (wm.x11_fd >= 0) std.posix.close(@intCast(wm.x11_fd));
+    if (wm.x11_fd >= 0) _ = std.c.close(@intCast(wm.x11_fd));
     const sigchld_handler = std.posix.Sigaction{
         .handler = .{ .handler = std.posix.SIG.DFL },
         .mask = std.mem.zeroes(std.posix.sigset_t),
         .flags = 0,
     };
-    std.posix.sigaction(std.posix.SIG.CHLD, &sigchld_handler, null);
+    std.posix.sigaction(.CHLD, &sigchld_handler, null);
 }
 
 pub fn spawnCommand(wm: *WindowManager, cmd: []const u8) void {
     std.debug.print("running cmd: {s}\n", .{cmd});
-    const pid = std.posix.fork() catch return;
+    const pid = std.c.fork();
+    if (pid < 0) return;
     if (pid == 0) {
+        const grandchild = std.c.fork();
+        if (grandchild < 0) std.c._exit(1);
+        if (grandchild != 0) std.c._exit(0);
         spawnChildSetup(wm);
         var cmd_buf: [1024]u8 = undefined;
-        if (cmd.len >= cmd_buf.len) {
-            std.posix.exit(1);
-        }
+        if (cmd.len >= cmd_buf.len) std.c._exit(1);
         @memcpy(cmd_buf[0..cmd.len], cmd);
         cmd_buf[cmd.len] = 0;
         const argv = [_:null]?[*:0]const u8{ "sh", "-c", @ptrCast(&cmd_buf) };
-        _ = std.posix.execvpeZ("sh", &argv, std.c.environ) catch {};
-        std.posix.exit(1);
+        _ = execvp("sh", &argv);
+        std.c._exit(1);
     }
+    _ = std.c.waitpid(pid, null, 0);
 }
 
 pub fn spawnTerminal(wm: *WindowManager) void {
-    const pid = std.posix.fork() catch return;
+    const pid = std.c.fork();
+    if (pid < 0) return;
     if (pid == 0) {
+        const grandchild = std.c.fork();
+        if (grandchild < 0) std.c._exit(1);
+        if (grandchild != 0) std.c._exit(0);
         spawnChildSetup(wm);
         var term_buf: [256]u8 = undefined;
         const terminal = wm.config.terminal;
-        if (terminal.len >= term_buf.len) {
-            std.posix.exit(1);
-        }
+        if (terminal.len >= term_buf.len) std.c._exit(1);
         @memcpy(term_buf[0..terminal.len], terminal);
         term_buf[terminal.len] = 0;
         const term_ptr: [*:0]const u8 = @ptrCast(&term_buf);
         const argv = [_:null]?[*:0]const u8{term_ptr};
-        _ = std.posix.execvpeZ(term_ptr, &argv, std.c.environ) catch {};
-        std.posix.exit(1);
+        _ = execvp(term_ptr, &argv);
+        std.c._exit(1);
     }
+    _ = std.c.waitpid(pid, null, 0);
 }
 
 pub fn movestack(direction: i32, wm: *WindowManager) void {
+    if (direction == 0) return;
     const monitor = wm.selected_monitor orelse return;
     const current = monitor.sel orelse return;
 
@@ -139,7 +149,7 @@ pub fn toggleView(tag_mask: u32, wm: *WindowManager) void {
         if ((new_tags & (@as(u32, 1) << @intCast(monitor.pertag.curtag -| 1))) == 0) {
             monitor.pertag.prevtag = monitor.pertag.curtag;
             var i: u32 = 0;
-            while (i < 9) : (i += 1) {
+            while (i < wm.config.tag_count) : (i += 1) {
                 if ((new_tags & (@as(u32, 1) << @intCast(i))) != 0) break;
             }
             monitor.pertag.curtag = i + 1;
@@ -240,11 +250,12 @@ pub fn toggleFullscreen(wm: *WindowManager) void {
 pub fn viewAdjacentTag(direction: i32, wm: *WindowManager) void {
     const monitor = wm.selected_monitor orelse return;
     const current_tag = monitor.pertag.curtag;
+    const max_tag: i32 = @intCast(wm.config.tag_count);
     var new_tag: i32 = @intCast(current_tag);
 
     new_tag += direction;
-    if (new_tag < 1) new_tag = 9;
-    if (new_tag > 9) new_tag = 1;
+    if (new_tag < 1) new_tag = max_tag;
+    if (new_tag > max_tag) new_tag = 1;
 
     const tag_mask: u32 = @as(u32, 1) << @intCast(new_tag - 1);
     core.view(tag_mask, wm);
@@ -253,13 +264,14 @@ pub fn viewAdjacentTag(direction: i32, wm: *WindowManager) void {
 pub fn viewAdjacentNonemptyTag(direction: i32, wm: *WindowManager) void {
     const monitor = wm.selected_monitor orelse return;
     const current_tag = monitor.pertag.curtag;
+    const max_tag: i32 = @intCast(wm.config.tag_count);
     var new_tag: i32 = @intCast(current_tag);
 
     var attempts: i32 = 0;
-    while (attempts < 9) : (attempts += 1) {
+    while (attempts < max_tag) : (attempts += 1) {
         new_tag += direction;
-        if (new_tag < 1) new_tag = 9;
-        if (new_tag > 9) new_tag = 1;
+        if (new_tag < 1) new_tag = max_tag;
+        if (new_tag > max_tag) new_tag = 1;
 
         const tag_mask: u32 = @as(u32, 1) << @intCast(new_tag - 1);
         if (core.hasClientsOnTag(monitor, tag_mask)) {
@@ -283,6 +295,7 @@ pub fn tagClient(tag_mask: u32, wm: *WindowManager) void {
 }
 
 pub fn focusstack(direction: i32, wm: *WindowManager) void {
+    if (direction == 0) return;
     const monitor = wm.selected_monitor orelse return;
     const current = monitor.sel orelse return;
 
@@ -427,6 +440,12 @@ pub fn setLayoutIndex(index: u32, wm: *WindowManager) void {
     }
 }
 
+fn warpCursorToMonitor(monitor: *Monitor, wm: *WindowManager) void {
+    const center_x = monitor.win_x + @divTrunc(monitor.win_w, 2);
+    const center_y = monitor.win_y + @divTrunc(monitor.win_h, 2);
+    _ = xlib.XWarpPointer(wm.display.handle, xlib.None, wm.display.root, 0, 0, 0, 0, center_x, center_y);
+}
+
 pub fn focusmon(direction: i32, wm: *WindowManager) void {
     const selmon = wm.selected_monitor orelse return;
     const target = monitor_mod.dirToMonitor(wm, direction) orelse return;
@@ -436,6 +455,9 @@ pub fn focusmon(direction: i32, wm: *WindowManager) void {
     core.unfocusClient(selmon.sel, false, wm);
     wm.selected_monitor = target;
     core.focus(null, wm);
+    if (wm.config.warp_cursor_to_monitor) {
+        warpCursorToMonitor(target, wm);
+    }
     std.debug.print("focusmon: monitor {d}\n", .{target.num});
 }
 
@@ -458,6 +480,10 @@ pub fn sendmon(direction: i32, wm: *WindowManager) void {
     core.focusTopClient(source_monitor, wm);
     core.arrange(source_monitor, wm);
     core.arrange(target, wm);
+
+    if (wm.config.warp_cursor_on_send) {
+        warpCursorToMonitor(target, wm);
+    }
 
     std.debug.print("sendmon: window=0x{x} to monitor {d}\n", .{ client.window, target.num });
 }
@@ -756,7 +782,7 @@ pub fn reloadLoadConfig(wm: *WindowManager) void {
     const loaded = if (wm.config_path) |path|
         lua.loadFile(path)
     else
-        lua.loadConfig();
+        lua.loadConfig(wm.env);
 
     if (loaded) {
         if (wm.config_path) |path| {
@@ -791,9 +817,9 @@ pub fn executeAction(action: config_mod.Action, int_arg: i32, str_arg: ?[]const 
                 }
             }
         },
-        .focus_next => focusstack(1, wm),
+        .focus_next => focusstack(if (int_arg == 0) 1 else int_arg, wm),
         .focus_prev => focusstack(-1, wm),
-        .move_next => movestack(1, wm),
+        .move_next => movestack(if (int_arg == 0) 1 else int_arg, wm),
         .move_prev => movestack(-1, wm),
         .resize_master => setmfact(@as(f32, @floatFromInt(int_arg)) / 1000.0, wm),
         .inc_master => incnmaster(1, wm),

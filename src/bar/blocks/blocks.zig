@@ -106,12 +106,14 @@ pub const Block = struct {
         };
     }
 
-    pub fn update(self: *Block) bool {
+    pub fn update(self: *Block, io: std.Io, gpa: std.mem.Allocator) bool {
         const interval_secs = self.interval();
         if (interval_secs == 0) return false;
 
-        const now = std.time.timestamp();
-        if (now - self.last_update < @as(i64, @intCast(interval_secs))) {
+        // .awake (monotonic) for interval bookkeeping, not .real (wall-clock) — std.Io rework gives us a clock enum now, and a wall-clock backstep would stretch intervals.
+        const now = std.Io.Timestamp.now(io, .awake).toSeconds();
+        // last_update == 0 is the never-ran sentinel; force the first refresh since `now - 0` is just uptime under .awake and can be smaller than the interval.
+        if (self.last_update != 0 and now - self.last_update < @as(i64, @intCast(interval_secs))) {
             return false;
         }
 
@@ -120,10 +122,10 @@ pub const Block = struct {
         const result = switch (self.data) {
             .static => |*s| s.content(&self.cached_content),
             .datetime => |*d| d.content(&self.cached_content),
-            .ram => |*r| r.content(&self.cached_content),
-            .shell => |*s| s.content(&self.cached_content),
-            .battery => |*b| b.content(&self.cached_content),
-            .cpu_temp => |*c| c.content(&self.cached_content),
+            .ram => |*r| r.content(io, &self.cached_content),
+            .shell => |*s| s.content(io, gpa, &self.cached_content),
+            .battery => |*b| b.content(io, &self.cached_content),
+            .cpu_temp => |*c| c.content(io, &self.cached_content),
         };
 
         self.cached_len = result.len;
