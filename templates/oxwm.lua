@@ -299,9 +299,10 @@ function oxwm.bar.set_position(position) end
 ---@param command "DateTime"|"Shell"|"Ram"|"Static" Block command type (Battery not supported)
 ---@param arg string|nil Command argument (format for DateTime, command for Shell, text for Static, nil for Ram)
 ---@param interval integer Update interval in seconds
----@param color string|integer Color as hex string or integer
----@param underline boolean Whether to underline the block
-function oxwm.bar.add_block(format, command, arg, interval, color, underline) end
+---@param fg string|integer Foreground (text) color as hex string or integer
+---@param bg string|integer Background color as hex string or integer (0/nil = transparent)
+---@param highlight string|integer Underline color as hex string or integer (0/nil = no underline)
+function oxwm.bar.add_block(format, command, arg, interval, fg, bg, highlight) end
 
 ---Set status bar blocks using block constructors
 ---@param blocks table[] Array of block configurations created with oxwm.bar.block.*
@@ -312,32 +313,32 @@ function oxwm.bar.set_blocks(blocks) end
 oxwm.bar.block = {}
 
 ---Create a RAM usage block
----@param config {format: string, interval: integer, color: string|integer, underline: boolean, click: string|{command: string, floating: boolean?, bypass_rules: boolean?}?} Block configuration
+---@param config {format: string, interval: integer, fg: string|integer, bg: string|integer, highlight: string|integer, click: string|{command: string, floating: boolean?, bypass_rules: boolean?}?} Block configuration (fg = text, bg = background, highlight = underline; omit bg/highlight for none)
 ---@return table Block configuration
 function oxwm.bar.block.ram(config) end
 
 ---Create a date/time block
----@param config {format: string, date_format: string, interval: integer, color: string|integer, underline: boolean, click: string|{command: string, floating: boolean?, bypass_rules: boolean?}?} Block configuration (format is display template with {}, date_format is strftime format)
+---@param config {format: string, date_format: string, interval: integer, fg: string|integer, bg: string|integer, highlight: string|integer, click: string|{command: string, floating: boolean?, bypass_rules: boolean?}?} Block configuration (format is display template with {}, date_format is strftime format; fg = text, bg = background, highlight = underline)
 ---@return table Block configuration
 function oxwm.bar.block.datetime(config) end
 
 ---Create a shell command block
----@param config {format: string, command: string, interval: integer, color: string|integer, underline: boolean, click: string|{command: string, floating: boolean?, bypass_rules: boolean?}?} Block configuration
+---@param config {format: string, command: string, interval: integer, fg: string|integer, bg: string|integer, highlight: string|integer, click: string|{command: string, floating: boolean?, bypass_rules: boolean?}?} Block configuration (fg = text, bg = background, highlight = underline)
 ---@return table Block configuration
 function oxwm.bar.block.shell(config) end
 
 ---Create a static text block
----@param config {format: string, text: string, interval: integer, color: string|integer, underline: boolean, click: string|{command: string, floating: boolean?, bypass_rules: boolean?}?} Block configuration
+---@param config {format: string, text: string, interval: integer, fg: string|integer, bg: string|integer, highlight: string|integer, click: string|{command: string, floating: boolean?, bypass_rules: boolean?}?} Block configuration (fg = text, bg = background, highlight = underline)
 ---@return table Block configuration
 function oxwm.bar.block.static(config) end
 
 ---Create a battery status block
----@param config {format: string, charging: string, discharging: string, full: string, interval: integer, color: string|integer, underline: boolean, battery_name: string, click: string|{command: string, floating: boolean?, bypass_rules: boolean?}?} Block configuration
+---@param config {format: string, charging: string, discharging: string, full: string, interval: integer, fg: string|integer, bg: string|integer, highlight: string|integer, battery_name: string, click: string|{command: string, floating: boolean?, bypass_rules: boolean?}?} Block configuration (fg = text, bg = background, highlight = underline)
 ---@return table Block configuration
 function oxwm.bar.block.battery(config) end
 
 ---Create a system tray block. Including this block enables the tray on the first bar; omitting it disables the tray entirely.
----@param config {color: string|integer, underline: boolean}? Optional appearance config (only color and underline are used)
+---@param config {fg: string|integer, bg: string|integer, highlight: string|integer}? Optional appearance config (only highlight is used)
 ---@return table Block configuration
 function oxwm.bar.block.systray(config) end
 

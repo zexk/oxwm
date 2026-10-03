@@ -5,15 +5,15 @@ pub const Shell = struct {
     format: []const u8,
     command: []const u8,
     interval_secs: u64,
-    color: c_ulong,
+    fg: c_ulong,
     bg: c_ulong,
 
-    pub fn init(format: []const u8, command: []const u8, interval_secs: u64, col: c_ulong, background: c_ulong) Shell {
+    pub fn init(format: []const u8, command: []const u8, interval_secs: u64, fg: c_ulong, background: c_ulong) Shell {
         return .{
             .format = format,
             .command = command,
             .interval_secs = interval_secs,
-            .color = col,
+            .fg = fg,
             .bg = background,
         };
     }
@@ -41,6 +41,6 @@ pub const Shell = struct {
     }
 
     pub fn getColor(self: *Shell) c_ulong {
-        return self.color;
+        return self.fg;
     }
 };

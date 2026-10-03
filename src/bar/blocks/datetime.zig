@@ -8,15 +8,15 @@ pub const DateTime = struct {
     format: []const u8,
     datetime_format: []const u8,
     interval_secs: u64,
-    color: c_ulong,
+    fg: c_ulong,
     bg: c_ulong,
 
-    pub fn init(format: []const u8, datetime_format: []const u8, interval_secs: u64, color: c_ulong, background: c_ulong) DateTime {
+    pub fn init(format: []const u8, datetime_format: []const u8, interval_secs: u64, fg: c_ulong, background: c_ulong) DateTime {
         return .{
             .format = format,
             .datetime_format = datetime_format,
             .interval_secs = interval_secs,
-            .color = color,
+            .fg = fg,
             .bg = background,
         };
     }
@@ -104,6 +104,6 @@ pub const DateTime = struct {
     }
 
     pub fn getColor(self: *DateTime) c_ulong {
-        return self.color;
+        return self.fg;
     }
 };

@@ -58,34 +58,32 @@ local blocks = {
     oxwm.bar.block.ram({
         format = "Ram: {used}/{total} GB",
         interval = 5,
-        color = colors.light_blue,
-        underline = true,
+        fg = colors.light_blue,
+        highlight = colors.light_blue,
     }),
     oxwm.bar.block.static({
         text = "│",
         interval = 999999999,
-        color = colors.lavender,
-        underline = false,
+        fg = colors.lavender,
     }),
     oxwm.bar.block.shell({
         format = "{}",
         command = "uname -r",
         interval = 999999999,
-        color = colors.red,
-        underline = true,
+        fg = colors.red,
+        highlight = colors.red,
     }),
     oxwm.bar.block.static({
         text = "│",
         interval = 999999999,
-        color = colors.lavender,
-        underline = false,
+        fg = colors.lavender,
     }),
     oxwm.bar.block.datetime({
         format = "{}",
         date_format = "%a, %b %d - %-I:%M %P",
         interval = 1,
-        color = colors.cyan,
-        underline = true,
+        fg = colors.cyan,
+        highlight = colors.cyan,
     }),
     -- Uncomment to add battery status (useful for laptops)
     oxwm.bar.block.battery({
@@ -94,8 +92,8 @@ local blocks = {
         discharging = "- Bat: {}%",
         full = "✓ Bat: {}%",
         interval = 30,
-        color = colors.green,
-        underline = true,
+        fg = colors.green,
+        highlight = colors.green,
         -- click: run a command when the block is clicked
         -- click = "alacritty -e btop",
         -- click = { command = "bluetui", floating = true },

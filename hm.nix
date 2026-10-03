@@ -13,9 +13,9 @@
   blockToLua = block: let
     common = ''
       interval = ${toString block.interval},
-      color = "#${block.color}",
+      fg = "#${block.fg}",
       ${optionalString (block.bg != "") ''bg = "#${block.bg}",''}
-      underline = ${boolToString block.underline},
+      ${optionalString (block.highlight != "") ''highlight = "#${block.highlight}",''}
     '';
   in
     "oxwm.bar.block.${block.kind}({\n"
@@ -350,7 +350,7 @@ in {
                 type = types.int;
                 default = 5;
               };
-              color = mkOption {
+              fg = mkOption {
                 type = types.str;
                 default = "";
               };
@@ -359,9 +359,10 @@ in {
                 default = "";
                 description = "Optional background color for the block (hex without #). Empty means no background.";
               };
-              underline = mkOption {
-                type = types.bool;
-                default = true;
+              highlight = mkOption {
+                type = types.str;
+                default = "";
+                description = "Optional underline color for the block (hex without #). Empty means no underline.";
               };
               text = mkOption {
                 type = types.str;
@@ -400,21 +401,22 @@ in {
                 kind = "ram";
                 interval = 5;
                 format = "Ram: {used}/{total} GB";
-                color = "9ece6a";
+                fg = "9ece6a";
+                highlight = "9ece6a";
               }
               {
                 kind = "static";
                 text = "|";
                 interval = 99999999;
-                color = "6dade3";
+                fg = "6dade3";
               }
               {
                 kind = "shell";
                 format = "{}";
                 command = "uname -r";
                 interval = 9999999;
-                color = "f7768e";
-                underline = true;
+                fg = "f7768e";
+                highlight = "f7768e";
               }
             ];
           '';

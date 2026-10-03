@@ -179,8 +179,8 @@ oxwm.bar.set_blocks({
         fmt_discharging = "- Bat: {}%",
         fmt_full = "✓ Bat: {}%",
         interval = 30,
-        color = colors.green,
-        underline = true,
+        fg = colors.green,
+        highlight = colors.green,
         battery_name = "BAT1"
     }),
     -- oxwm.bar.block.battery({
@@ -189,48 +189,45 @@ oxwm.bar.set_blocks({
     --     full = "󰁹 Bat: {}%",
     --     format = "",
     --     interval = 30,
-    --     color = colors.green,
-    --     underline = true
+    --     fg = colors.green,
+    --     highlight = colors.green
     -- }),
     oxwm.bar.block.static({
         text = "│",
         format = "",
         interval = 999999999,
-        color = colors.lavender,
-        underline = false
+        fg = colors.lavender
     }),
     oxwm.bar.block.ram({
         format = "  {used}/{total} GB",
         interval = 5,
-        color = colors.light_blue,
-        underline = true
+        fg = colors.light_blue,
+        highlight = colors.light_blue
     }),
     oxwm.bar.block.static({
         text = "│",
         format = "",
         interval = 999999999,
-        color = colors.lavender,
-        underline = false
+        fg = colors.lavender
     }),
     oxwm.bar.block.shell({
         command = "uname -r",
         format = " {}",
         interval = 999999999,
-        color = colors.red,
-        underline = true
+        fg = colors.red,
+        highlight = colors.red
     }),
     oxwm.bar.block.static({
         text = "│",
         format = "",
         interval = 999999999,
-        color = colors.lavender,
-        underline = false
+        fg = colors.lavender
     }),
     oxwm.bar.block.datetime({
         format = "󰸘 {}",
         interval = 1,
-        color = colors.cyan,
-        underline = true,
+        fg = colors.cyan,
+        highlight = colors.cyan,
         date_format = "%a, %b %d - %-I:%M %P"
     })
 })

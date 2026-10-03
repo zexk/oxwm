@@ -3,14 +3,14 @@ const std = @import("std");
 pub const Ram = struct {
     format: []const u8,
     interval_secs: u64,
-    color: c_ulong,
+    fg: c_ulong,
     bg: c_ulong,
 
-    pub fn init(format: []const u8, interval_secs: u64, color: c_ulong, background: c_ulong) Ram {
+    pub fn init(format: []const u8, interval_secs: u64, fg: c_ulong, background: c_ulong) Ram {
         return .{
             .format = format,
             .interval_secs = interval_secs,
-            .color = color,
+            .fg = fg,
             .bg = background,
         };
     }
@@ -59,7 +59,7 @@ pub const Ram = struct {
     }
 
     pub fn getColor(self: *Ram) c_ulong {
-        return self.color;
+        return self.fg;
     }
 };
 

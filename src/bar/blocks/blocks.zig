@@ -13,7 +13,7 @@ pub const Block = struct {
     last_update: i64,
     cached_content: [256]u8,
     cached_len: usize,
-    underline: bool,
+    highlight: c_ulong,
     click: ?config_mod.ClickAction = null,
     x_start: i32 = 0,
     x_end: i32 = 0,
@@ -27,46 +27,46 @@ pub const Block = struct {
         cpu_temp: CpuTemp,
     };
 
-    pub fn initStatic(text: []const u8, col: c_ulong, background: c_ulong, ul: bool) Block {
+    pub fn initStatic(text: []const u8, foreground: c_ulong, background: c_ulong, highlight: c_ulong) Block {
         var block = Block{
-            .data = .{ .static = Static.init(text, col, background) },
+            .data = .{ .static = Static.init(text, foreground, background) },
             .last_update = 0,
             .cached_content = undefined,
             .cached_len = 0,
-            .underline = ul,
+            .highlight = highlight,
         };
         @memcpy(block.cached_content[0..text.len], text);
         block.cached_len = text.len;
         return block;
     }
 
-    pub fn initDatetime(format: []const u8, datetime_format: []const u8, interval_secs: u64, col: c_ulong, background: c_ulong, ul: bool) Block {
+    pub fn initDatetime(format: []const u8, datetime_format: []const u8, interval_secs: u64, foreground: c_ulong, background: c_ulong, highlight: c_ulong) Block {
         return .{
-            .data = .{ .datetime = DateTime.init(format, datetime_format, interval_secs, col, background) },
+            .data = .{ .datetime = DateTime.init(format, datetime_format, interval_secs, foreground, background) },
             .last_update = 0,
             .cached_content = undefined,
             .cached_len = 0,
-            .underline = ul,
+            .highlight = highlight,
         };
     }
 
-    pub fn initRam(format: []const u8, interval_secs: u64, col: c_ulong, background: c_ulong, ul: bool) Block {
+    pub fn initRam(format: []const u8, interval_secs: u64, foreground: c_ulong, background: c_ulong, highlight: c_ulong) Block {
         return .{
-            .data = .{ .ram = Ram.init(format, interval_secs, col, background) },
+            .data = .{ .ram = Ram.init(format, interval_secs, foreground, background) },
             .last_update = 0,
             .cached_content = undefined,
             .cached_len = 0,
-            .underline = ul,
+            .highlight = highlight,
         };
     }
 
-    pub fn initShell(format: []const u8, command: []const u8, interval_secs: u64, col: c_ulong, background: c_ulong, ul: bool) Block {
+    pub fn initShell(format: []const u8, command: []const u8, interval_secs: u64, foreground: c_ulong, background: c_ulong, highlight: c_ulong) Block {
         return .{
-            .data = .{ .shell = Shell.init(format, command, interval_secs, col, background) },
+            .data = .{ .shell = Shell.init(format, command, interval_secs, foreground, background) },
             .last_update = 0,
             .cached_content = undefined,
             .cached_len = 0,
-            .underline = ul,
+            .highlight = highlight,
         };
     }
 
@@ -76,16 +76,16 @@ pub const Block = struct {
         format_full: []const u8,
         battery_name: []const u8,
         interval_secs: u64,
-        col: c_ulong,
+        foreground: c_ulong,
         background: c_ulong,
-        ul: bool,
+        highlight: c_ulong,
     ) Block {
         return .{
-            .data = .{ .battery = Battery.init(format_charging, format_discharging, format_full, battery_name, interval_secs, col, background) },
+            .data = .{ .battery = Battery.init(format_charging, format_discharging, format_full, battery_name, interval_secs, foreground, background) },
             .last_update = 0,
             .cached_content = undefined,
             .cached_len = 0,
-            .underline = ul,
+            .highlight = highlight,
         };
     }
 
@@ -93,16 +93,16 @@ pub const Block = struct {
         format: []const u8,
         thermal_zone: []const u8,
         interval_secs: u64,
-        col: c_ulong,
+        foreground: c_ulong,
         background: c_ulong,
-        ul: bool,
+        highlight: c_ulong,
     ) Block {
         return .{
-            .data = .{ .cpu_temp = CpuTemp.init(format, thermal_zone, interval_secs, col, background) },
+            .data = .{ .cpu_temp = CpuTemp.init(format, thermal_zone, interval_secs, foreground, background) },
             .last_update = 0,
             .cached_content = undefined,
             .cached_len = 0,
-            .underline = ul,
+            .highlight = highlight,
         };
     }
 
@@ -143,14 +143,14 @@ pub const Block = struct {
         };
     }
 
-    pub fn color(self: *const Block) c_ulong {
+    pub fn fg(self: *const Block) c_ulong {
         return switch (self.data) {
-            .static => |s| s.color,
-            .datetime => |d| d.color,
-            .ram => |r| r.color,
-            .shell => |s| s.color,
-            .battery => |b| b.color,
-            .cpu_temp => |c| c.color,
+            .static => |s| s.fg,
+            .datetime => |d| d.fg,
+            .ram => |r| r.fg,
+            .shell => |s| s.fg,
+            .battery => |b| b.fg,
+            .cpu_temp => |c| c.fg,
         };
     }
 

@@ -857,16 +857,16 @@ fn parseBlockConfig(state: *c.lua_State, idx: c_int) ?Block {
     const interval: u32 = @intCast(c.lua_tointegerx(state, -1, null));
     c.lua_settop(state, -2);
 
-    _ = c.lua_getfield(state, idx, "color");
-    const color = parseColor(state, -1);
+    _ = c.lua_getfield(state, idx, "fg");
+    const fg = parseColor(state, -1);
     c.lua_settop(state, -2);
 
     _ = c.lua_getfield(state, idx, "bg");
     const bg = parseColor(state, -1);
     c.lua_settop(state, -2);
 
-    _ = c.lua_getfield(state, idx, "underline");
-    const underline = c.lua_toboolean(state, -1) != 0;
+    _ = c.lua_getfield(state, idx, "highlight");
+    const highlight = parseColor(state, -1);
     c.lua_settop(state, -2);
 
     _ = c.lua_getfield(state, idx, "click");
@@ -877,9 +877,9 @@ fn parseBlockConfig(state: *c.lua_State, idx: c_int) ?Block {
         .block_type = .static,
         .format = format,
         .interval = interval,
-        .color = color,
+        .fg = fg,
         .bg = bg,
-        .underline = underline,
+        .highlight = highlight,
         .click = click,
     };
 
@@ -1034,14 +1034,14 @@ fn luaBarBlockBattery(state: ?*c.lua_State) callconv(.c) c_int {
     _ = c.lua_getfield(s, 1, "interval");
     c.lua_setfield(s, -2, "interval");
 
-    _ = c.lua_getfield(s, 1, "color");
-    c.lua_setfield(s, -2, "color");
+    _ = c.lua_getfield(s, 1, "fg");
+    c.lua_setfield(s, -2, "fg");
 
     _ = c.lua_getfield(s, 1, "bg");
     c.lua_setfield(s, -2, "bg");
 
-    _ = c.lua_getfield(s, 1, "underline");
-    c.lua_setfield(s, -2, "underline");
+    _ = c.lua_getfield(s, 1, "highlight");
+    c.lua_setfield(s, -2, "highlight");
 
     _ = c.lua_getfield(s, 1, "click");
     c.lua_setfield(s, -2, "click");
@@ -1072,14 +1072,14 @@ fn createBlockTable(state: *c.lua_State, block_type: [*:0]const u8, arg: ?[]cons
     _ = c.lua_getfield(state, 1, "interval");
     c.lua_setfield(state, -2, "interval");
 
-    _ = c.lua_getfield(state, 1, "color");
-    c.lua_setfield(state, -2, "color");
+    _ = c.lua_getfield(state, 1, "fg");
+    c.lua_setfield(state, -2, "fg");
 
     _ = c.lua_getfield(state, 1, "bg");
     c.lua_setfield(state, -2, "bg");
 
-    _ = c.lua_getfield(state, 1, "underline");
-    c.lua_setfield(state, -2, "underline");
+    _ = c.lua_getfield(state, 1, "highlight");
+    c.lua_setfield(state, -2, "highlight");
 
     _ = c.lua_getfield(state, 1, "click");
     c.lua_setfield(state, -2, "click");

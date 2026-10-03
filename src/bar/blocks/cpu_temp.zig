@@ -5,7 +5,7 @@ pub const CpuTemp = struct {
     format: []const u8,
     device: []const u8,
     interval_secs: u64,
-    color: c_ulong,
+    fg: c_ulong,
     bg: c_ulong,
     cached_path: [128]u8,
     cached_path_len: usize,
@@ -15,14 +15,14 @@ pub const CpuTemp = struct {
         format: []const u8,
         device: []const u8,
         interval_secs: u64,
-        color: c_ulong,
+        fg: c_ulong,
         background: c_ulong,
     ) CpuTemp {
         return .{
             .format = format,
             .device = device,
             .interval_secs = interval_secs,
-            .color = color,
+            .fg = fg,
             .bg = background,
             .cached_path = undefined,
             .cached_path_len = 0,
@@ -115,6 +115,6 @@ pub const CpuTemp = struct {
     }
 
     pub fn getColor(self: *CpuTemp) c_ulong {
-        return self.color;
+        return self.fg;
     }
 };

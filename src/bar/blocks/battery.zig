@@ -7,7 +7,7 @@ pub const Battery = struct {
     format_full: []const u8,
     battery_name: []const u8,
     interval_secs: u64,
-    color: c_ulong,
+    fg: c_ulong,
     bg: c_ulong,
 
     pub fn init(
@@ -16,7 +16,7 @@ pub const Battery = struct {
         format_full: []const u8,
         battery_name: []const u8,
         interval_secs: u64,
-        color: c_ulong,
+        fg: c_ulong,
         background: c_ulong,
     ) Battery {
         return .{
@@ -25,7 +25,7 @@ pub const Battery = struct {
             .format_full = format_full,
             .battery_name = if (battery_name.len > 0) battery_name else "BAT0",
             .interval_secs = interval_secs,
-            .color = color,
+            .fg = fg,
             .bg = background,
         };
     }
@@ -85,6 +85,6 @@ pub const Battery = struct {
     }
 
     pub fn getColor(self: *Battery) c_ulong {
-        return self.color;
+        return self.fg;
     }
 };

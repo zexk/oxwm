@@ -47,8 +47,7 @@ pub const Bar = struct {
     needs_redraw: bool,
     next: ?*Bar,
     systray: ?*Systray,
-    systray_underline: bool,
-    systray_color: u32,
+    systray_highlight: u32,
 
     /// Creates a bar window for `monitor` using the given config.
     /// Returns null on allocation failure or if the font cannot be loaded.
@@ -152,8 +151,7 @@ pub const Bar = struct {
             .needs_redraw = true,
             .next = null,
             .systray = systray,
-            .systray_underline = false,
-            .systray_color = 0xffffff,
+            .systray_highlight = 0,
         };
 
         monitor.bar_win = window;
@@ -180,9 +178,8 @@ pub const Bar = struct {
         self.blocks.append(self.allocator, block) catch {};
     }
 
-    pub fn setSystrayConfig(self: *Bar, underline: bool, col: u32) void {
-        self.systray_underline = underline;
-        self.systray_color = col;
+    pub fn setSystrayConfig(self: *Bar, highlight: u32) void {
+        self.systray_highlight = highlight;
     }
 
     pub fn clearBlocks(self: *Bar) void {
@@ -254,9 +251,9 @@ pub const Bar = struct {
             if (block.bg() != 0) {
                 self.fillRect(display, block_x, 0, content_width, self.height, block.bg());
             }
-            self.drawText(display, block_x, @divTrunc(self.height + self.font_height, 2) - 4, content, block.color());
-            if (block.underline) {
-                self.fillRect(display, block_x, self.height - 2, content_width, 2, block.color());
+            self.drawText(display, block_x, @divTrunc(self.height + self.font_height, 2) - 4, content, block.fg());
+            if (block.highlight != 0) {
+                self.fillRect(display, block_x, self.height - 2, content_width, 2, block.highlight);
             }
             block_x -= padding;
         }
@@ -293,8 +290,8 @@ pub const Bar = struct {
         if (self.systray) |tray| {
             const systray_x = self.width - systray_width - padding;
             tray.updatePosition(systray_x, 0);
-            if (self.systray_underline and systray_width > 0) {
-                self.fillRect(display, systray_x, self.height - 2, systray_width, 2, self.systray_color);
+            if (self.systray_highlight != 0 and systray_width > 0) {
+                self.fillRect(display, systray_x, self.height - 2, systray_width, 2, self.systray_highlight);
             }
         }
 

@@ -472,15 +472,15 @@ pub const WindowManager = struct {
         if (self.config.blocks.items.len > 0) {
             for (self.config.blocks.items) |cfg_block| {
                 if (cfg_block.block_type == .systray) {
-                    bar.setSystrayConfig(cfg_block.underline, cfg_block.color);
+                    bar.setSystrayConfig(cfg_block.highlight);
                 } else {
                     bar.addBlock(configBlockToBarBlock(cfg_block));
                 }
             }
         } else {
-            bar.addBlock(blocks_mod.Block.initRam("", 5, 0x7aa2f7, 0, true));
-            bar.addBlock(blocks_mod.Block.initStatic(" | ", 0x666666, 0, false));
-            bar.addBlock(blocks_mod.Block.initDatetime("", "%H:%M", 1, 0x0db9d7, 0, true));
+            bar.addBlock(blocks_mod.Block.initRam("", 5, 0x7aa2f7, 0, 0x7aa2f7));
+            bar.addBlock(blocks_mod.Block.initStatic(" | ", 0x666666, 0, 0));
+            bar.addBlock(blocks_mod.Block.initDatetime("", "%H:%M", 1, 0x0db9d7, 0, 0x0db9d7));
         }
     }
 
@@ -746,23 +746,23 @@ fn configHasSystray(config: Config) bool {
 /// Converts a config block description into a live status bar block.
 pub fn configBlockToBarBlock(cfg: config_mod.Block) blocks_mod.Block {
     var block = switch (cfg.block_type) {
-        .static => blocks_mod.Block.initStatic(cfg.format, cfg.color, cfg.bg, cfg.underline),
+        .static => blocks_mod.Block.initStatic(cfg.format, cfg.fg, cfg.bg, cfg.highlight),
         .datetime => blocks_mod.Block.initDatetime(
             cfg.format,
             cfg.datetime_format orelse "%H:%M",
             cfg.interval,
-            cfg.color,
+            cfg.fg,
             cfg.bg,
-            cfg.underline,
+            cfg.highlight,
         ),
-        .ram => blocks_mod.Block.initRam(cfg.format, cfg.interval, cfg.color, cfg.bg, cfg.underline),
+        .ram => blocks_mod.Block.initRam(cfg.format, cfg.interval, cfg.fg, cfg.bg, cfg.highlight),
         .shell => blocks_mod.Block.initShell(
             cfg.format,
             cfg.command orelse "",
             cfg.interval,
-            cfg.color,
+            cfg.fg,
             cfg.bg,
-            cfg.underline,
+            cfg.highlight,
         ),
         .battery => blocks_mod.Block.initBattery(
             cfg.format_charging orelse "",
@@ -770,19 +770,19 @@ pub fn configBlockToBarBlock(cfg: config_mod.Block) blocks_mod.Block {
             cfg.format_full orelse "",
             cfg.battery_name orelse "BAT0",
             cfg.interval,
-            cfg.color,
+            cfg.fg,
             cfg.bg,
-            cfg.underline,
+            cfg.highlight,
         ),
         .cpu_temp => blocks_mod.Block.initCpuTemp(
             cfg.format,
             cfg.thermal_zone orelse "thermal_zone0",
             cfg.interval,
-            cfg.color,
+            cfg.fg,
             cfg.bg,
-            cfg.underline,
+            cfg.highlight,
         ),
-        .systray => blocks_mod.Block.initStatic("", 0, 0, false),
+        .systray => blocks_mod.Block.initStatic("", 0, 0, 0),
     };
     block.click = cfg.click;
     return block;

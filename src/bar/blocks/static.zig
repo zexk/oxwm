@@ -2,11 +2,11 @@ const std = @import("std");
 
 pub const Static = struct {
     text: []const u8,
-    color: c_ulong,
+    fg: c_ulong,
     bg: c_ulong,
 
-    pub fn init(text: []const u8, color: c_ulong, background: c_ulong) Static {
-        return .{ .text = text, .color = color, .bg = background };
+    pub fn init(text: []const u8, fg: c_ulong, background: c_ulong) Static {
+        return .{ .text = text, .fg = fg, .bg = background };
     }
 
     pub fn content(self: *Static, buffer: []u8) []const u8 {
@@ -20,6 +20,6 @@ pub const Static = struct {
     }
 
     pub fn getColor(self: *Static) c_ulong {
-        return self.color;
+        return self.fg;
     }
 };

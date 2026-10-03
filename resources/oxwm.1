@@ -236,13 +236,16 @@ Execute shell command and display output
 .B Static
 Static text display
 .SS Block Configuration
-Each block supports:
+Each block takes fg/bg/highlight colors, mirroring the tag color schemes:
 .IP \(bu 2
-.B color
+.B fg
 \- Text color (hex: #RRGGBB or 0xRRGGBB)
 .IP \(bu 2
-.B underline
-\- Underline color
+.B bg
+\- Background color (omit for transparent)
+.IP \(bu 2
+.B highlight
+\- Underline color (omit for no underline)
 .IP \(bu 2
 .B interval
 \- Update interval in seconds
