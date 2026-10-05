@@ -330,7 +330,7 @@ pub fn grabbuttons(client: *Client, focused: bool, wm: *WindowManager) void {
 
 pub fn setClientState(client: *Client, state: c_long, wm: *WindowManager) void {
     var data: [2]c_long = .{ state, xlib.None };
-    _ = xlib.c.XChangeProperty(wm.display.handle, client.window, wm.atoms.wm_state, xlib.XA_ATOM, 32, xlib.PropModeReplace, @ptrCast(&data), 2);
+    _ = xlib.c.XChangeProperty(wm.display.handle, client.window, wm.atoms.wm_state, wm.atoms.wm_state, 32, xlib.PropModeReplace, @ptrCast(&data), 2);
 }
 
 pub fn setFullscreen(client: *Client, fullscreen: bool, wm: *WindowManager) void {
