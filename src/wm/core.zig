@@ -190,8 +190,10 @@ pub fn focus(target_client: ?*Client, wm: *WindowManager) void {
         _ = xlib.XSetWindowBorder(wm.display.handle, client.window, wm.config.border_focused);
         if (!client.never_focus) {
             _ = xlib.XSetInputFocus(wm.display.handle, client.window, xlib.RevertToPointerRoot, xlib.CurrentTime);
-            _ = xlib.XChangeProperty(wm.display.handle, wm.display.root, wm.atoms.net_active_window, xlib.XA_WINDOW, 32, xlib.PropModeReplace, @ptrCast(&client.window), 1);
         }
+        // Globally active clients (input=False + WM_TAKE_FOCUS, e.g. Wine) take
+        // focus themselves but still need to be published as the active window.
+        _ = xlib.XChangeProperty(wm.display.handle, wm.display.root, wm.atoms.net_active_window, xlib.XA_WINDOW, 32, xlib.PropModeReplace, @ptrCast(&client.window), 1);
         _ = sendEvent(client, wm.atoms.wm_take_focus, wm);
     } else {
         _ = xlib.XSetInputFocus(wm.display.handle, wm.display.root, xlib.RevertToPointerRoot, xlib.CurrentTime);
@@ -223,8 +225,8 @@ pub fn unfocusClient(client: ?*Client, reset_input_focus: bool, wm: *WindowManag
 pub fn setFocus(client: *Client, wm: *WindowManager) void {
     if (!client.never_focus) {
         _ = xlib.XSetInputFocus(wm.display.handle, client.window, xlib.RevertToPointerRoot, xlib.CurrentTime);
-        _ = xlib.XChangeProperty(wm.display.handle, wm.display.root, wm.atoms.net_active_window, xlib.XA_WINDOW, 32, xlib.PropModeReplace, @ptrCast(&client.window), 1);
     }
+    _ = xlib.XChangeProperty(wm.display.handle, wm.display.root, wm.atoms.net_active_window, xlib.XA_WINDOW, 32, xlib.PropModeReplace, @ptrCast(&client.window), 1);
     _ = sendEvent(client, wm.atoms.wm_take_focus, wm);
 }
 
