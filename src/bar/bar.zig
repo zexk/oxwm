@@ -236,30 +236,30 @@ pub const Bar = struct {
         x_position += self.textWidth(display, layout_symbol) + padding;
 
         const systray_width: i32 = if (self.systray) |tray| tray.width() else 0;
-        var block_x: i32 = self.width - padding - systray_width;
+        var block_x: i32 = self.width - systray_width;
         if (systray_width > 0) block_x -= padding;
 
+        // Blocks are laid out like tags: contiguous cells, padding inside.
         var block_index: usize = self.blocks.items.len;
         while (block_index > 0) {
             block_index -= 1;
             const block = &self.blocks.items[block_index];
             const content = block.getContent();
-            const content_width = self.textWidth(display, content);
-            block_x -= content_width;
+            const block_width = self.textWidth(display, content) + padding * 2;
+            block_x -= block_width;
             block.x_start = block_x;
-            block.x_end = block_x + content_width;
+            block.x_end = block_x + block_width;
             if (block.bg() != 0) {
-                self.fillRect(display, block_x, 0, content_width, self.height, block.bg());
+                self.fillRect(display, block_x, 0, block_width, self.height, block.bg());
             }
-            self.drawText(display, block_x, @divTrunc(self.height + self.font_height, 2) - 4, content, block.fg());
+            self.drawText(display, block_x + padding, @divTrunc(self.height + self.font_height, 2) - 4, content, block.fg());
             if (block.highlight != 0) {
-                self.fillRect(display, block_x, self.height - 2, content_width, 2, block.highlight);
+                self.fillRect(display, block_x, self.height - 3, block_width, 3, block.highlight);
             }
-            block_x -= padding;
         }
 
         if (self.show_title) {
-            const middle_right = block_x + padding;
+            const middle_right = block_x;
             const middle_width = middle_right - x_position;
             if (middle_width > 0) {
                 if (self.monitor.sel) |sel| {
