@@ -184,6 +184,7 @@ pub fn focus(target_client: ?*Client, wm: *WindowManager) void {
     }
 
     if (focus_client) |client| {
+        clearFullscreenPeers(client, wm);
         if (client.monitor != selmon) {
             wm.selected_monitor = client.monitor;
         }
@@ -294,6 +295,11 @@ pub fn showhideClient(client: ?*Client, wm: *WindowManager) void {
     if (client_mod.isVisible(target)) {
         _ = xlib.XMoveWindow(wm.display.handle, target.window, target.x, target.y);
         const monitor = target.monitor orelse return;
+        if (target.is_fullscreen and (target.x != monitor.mon_x or target.y != monitor.mon_y or
+            target.width != monitor.mon_w or target.height != monitor.mon_h))
+        {
+            tiling.resizeClient(target, monitor.mon_x, monitor.mon_y, monitor.mon_w, monitor.mon_h);
+        }
         if ((monitor.lt[monitor.sel_lt] == null or target.is_floating) and !target.is_fullscreen) {
             tiling.resize(target, target.x, target.y, target.width, target.height, false);
         }
@@ -364,10 +370,27 @@ pub fn publishNetWmState(client: *Client, wm: *WindowManager) void {
     );
 }
 
+fn clearFullscreenPeers(client: *Client, wm: *WindowManager) void {
+    const monitor = client.monitor orelse return;
+    var current = monitor.clients;
+    while (current) |other| : (current = other.next) {
+        if (other != client and other.is_fullscreen and
+            ((other.tags & client.tags) != 0 or (client_mod.isVisible(client) and client_mod.isVisible(other))))
+        {
+            setFullscreen(other, false, wm);
+        }
+    }
+}
+
 pub fn setFullscreen(client: *Client, fullscreen: bool, wm: *WindowManager) void {
     const monitor = client.monitor orelse return;
 
+    if (fullscreen) clearFullscreenPeers(client, wm);
     if (fullscreen and !client.is_fullscreen) {
+        client.old_x = client.x;
+        client.old_y = client.y;
+        client.old_width = client.width;
+        client.old_height = client.height;
         client.is_fullscreen = true;
         publishNetWmState(client, wm);
         client.old_state = client.is_floating;

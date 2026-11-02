@@ -236,10 +236,13 @@ pub fn resize(client: *Client, target_x: i32, target_y: i32, target_width: i32, 
 }
 
 pub fn resizeClient(client: *Client, target_x: i32, target_y: i32, target_width: i32, target_height: i32) void {
-    client.old_x = client.x;
-    client.old_y = client.y;
-    client.old_width = client.width;
-    client.old_height = client.height;
+    // Fullscreen resizes must preserve the geometry saved on entry.
+    if (!client.is_fullscreen) {
+        client.old_x = client.x;
+        client.old_y = client.y;
+        client.old_width = client.width;
+        client.old_height = client.height;
+    }
     client.x = target_x;
     client.y = target_y;
     client.width = target_width;

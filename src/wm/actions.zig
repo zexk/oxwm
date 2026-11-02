@@ -177,6 +177,7 @@ pub fn toggleClientTag(tag_mask: u32, wm: *WindowManager) void {
     const new_tags = client.tags ^ tag_mask;
     if (new_tags != 0) {
         client.tags = new_tags;
+        if (client.is_fullscreen) core.setFullscreen(client, true, wm);
         core.focusTopClient(monitor, wm);
         core.arrange(monitor, wm);
         wm.invalidateBars();
@@ -288,6 +289,7 @@ pub fn tagClient(tag_mask: u32, wm: *WindowManager) void {
         return;
     }
     client.tags = tag_mask;
+    if (client.is_fullscreen) core.setFullscreen(client, true, wm);
     core.focusTopClient(monitor, wm);
     core.arrange(monitor, wm);
     wm.invalidateBars();
@@ -555,11 +557,19 @@ pub fn sendmon(direction: i32, wm: *WindowManager) void {
 
     client_mod.detach(client);
     client_mod.detachStack(client);
+    if (client.is_fullscreen) {
+        client.old_x += target.mon_x - source_monitor.mon_x;
+        client.old_y += target.mon_y - source_monitor.mon_y;
+    }
     client.monitor = target;
     client.tags = target.tagset[target.sel_tags];
     client_mod.attachWith(client, wm.config.attach_method);
     client_mod.attachStack(client);
 
+    if (client.is_fullscreen) {
+        core.setFullscreen(client, true, wm);
+        target.sel = client;
+    }
     core.focusTopClient(source_monitor, wm);
     core.arrange(source_monitor, wm);
     core.arrange(target, wm);

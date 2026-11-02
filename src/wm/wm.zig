@@ -422,10 +422,18 @@ pub const WindowManager = struct {
                     while (removed.clients) |c| {
                         removed.clients = c.next;
                         client_mod.detachStack(c);
+                        if (c.is_fullscreen) {
+                            c.old_x += target.mon_x - removed.mon_x;
+                            c.old_y += target.mon_y - removed.mon_y;
+                        }
                         c.monitor = target;
                         c.tags = target.tagset[target.sel_tags];
                         client_mod.attachWith(c, self.config.attach_method);
                         client_mod.attachStack(c);
+                        if (c.is_fullscreen) {
+                            core.setFullscreen(c, true, self);
+                            target.sel = c;
+                        }
                     }
                 }
 

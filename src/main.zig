@@ -189,4 +189,5 @@ fn runAutostartCommands(wm: *WindowManager) !void {
 
 test {
     _ = @import("x11/events.zig");
+    _ = @import("wm/fullscreen_tests.zig");
 }
